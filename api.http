@@ -1,0 +1,60 @@
+# Fluxo completo. Mesmo contrato dos templates Java e NestJS: troque @host para comparar.
+# VS Code (REST Client) ou JetBrains HTTP Client. Rode na ordem.
+@host = http://localhost:8080
+
+### Cadastro (público)
+# @name signup
+POST {{host}}/api/users
+Content-Type: application/json
+
+{"name": "Ana", "email": "ana@example.com", "password": "secret123"}
+
+### Login
+# @name login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{"email": "ana@example.com", "password": "secret123"}
+
+### Meu usuário
+GET {{host}}/api/users/{{signup.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### Renomear
+PUT {{host}}/api/users/{{signup.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{"name": "Ana Maria"}
+
+### Boas-vindas (202; o log do consumer aparece logo depois)
+POST {{host}}/api/users/{{signup.response.body.id}}/welcome
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### Refresh (rotaciona: repetir esta mesma requisição dá 401)
+# @name refresh
+POST {{host}}/api/auth/refresh
+Content-Type: application/json
+
+{"refreshToken": "{{login.response.body.refreshToken}}"}
+
+### Logout (revoga o refresh token novo; depois disso o refresh dá 401)
+POST {{host}}/api/auth/logout
+Content-Type: application/json
+
+{"refreshToken": "{{refresh.response.body.refreshToken}}"}
+
+### Login do admin de dev
+# @name admin
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{"email": "admin@example.com", "password": "admin12345"}
+
+### Listar (só ADMIN)
+GET {{host}}/api/users?page=0&size=20
+Authorization: Bearer {{admin.response.body.accessToken}}
+
+### Remover (soft delete; derruba as sessões)
+DELETE {{host}}/api/users/{{signup.response.body.id}}
+Authorization: Bearer {{admin.response.body.accessToken}}
