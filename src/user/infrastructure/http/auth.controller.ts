@@ -5,6 +5,7 @@ import {
   Post,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { AuthService, type TokenPair } from '../../application/auth.service.js';
 import {
   type LoginBody,
@@ -23,6 +24,7 @@ const toResponse = (pair: TokenPair | undefined, failure: string) => {
   };
 };
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}

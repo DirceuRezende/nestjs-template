@@ -199,4 +199,21 @@ describe('API (e2e)', () => {
       .send({ email: 'ana@example.com', password: 'secret123' })
       .expect(401);
   });
+
+  it('OpenAPI: documento com rotas, schemas do Zod e bearer', async () => {
+    const { body } = await http().get('/api/docs-json').expect(200);
+    expect(Object.keys(body.paths)).toEqual(
+      expect.arrayContaining([
+        '/api/users',
+        '/api/users/{id}',
+        '/api/auth/login',
+      ]),
+    );
+    const register =
+      body.paths['/api/users'].post.requestBody.content['application/json']
+        .schema;
+    expect(register.required).toEqual(['name', 'email', 'password']);
+    expect(body.paths['/api/users'].get.security).toEqual([{ bearer: [] }]);
+    await http().get('/api/docs').expect(200);
+  });
 });

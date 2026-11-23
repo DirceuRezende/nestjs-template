@@ -17,6 +17,7 @@ import {
   UseFilters,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { sendProblem } from '../../../http/problem-details.js';
 import { UserService } from '../../application/user.service.js';
@@ -49,6 +50,7 @@ export class DomainValidationFilter implements ExceptionFilter {
   }
 }
 
+@ApiTags('users')
 @Controller('users')
 @UseFilters(DomainValidationFilter)
 export class UserController {
@@ -67,6 +69,7 @@ export class UserController {
   }
 
   @Get()
+  @ApiBearerAuth()
   @UseGuards(AuthGuard, AdminGuard)
   async list(@Query({ schema: listQuerySchema }) query: ListQuery) {
     const page = await this.users.list(query.page, query.size);
@@ -74,12 +77,14 @@ export class UserController {
   }
 
   @Get(':id')
+  @ApiBearerAuth()
   @UseGuards(AuthGuard, SelfOrAdminGuard)
   async get(@Param('id', { schema: userId }) id: string) {
     return toResponse(orNotFound(await this.users.get(id)));
   }
 
   @Put(':id')
+  @ApiBearerAuth()
   @UseGuards(AuthGuard, SelfOrAdminGuard)
   async update(
     @Param('id', { schema: userId }) id: string,
@@ -90,6 +95,7 @@ export class UserController {
 
   @Delete(':id')
   @HttpCode(204)
+  @ApiBearerAuth()
   @UseGuards(AuthGuard, SelfOrAdminGuard)
   async delete(@Param('id', { schema: userId }) id: string) {
     orNotFound(await this.users.delete(id));
@@ -98,6 +104,7 @@ export class UserController {
   /** Assíncrono: grava no outbox e responde 202; o envio acontece via Kafka. */
   @Post(':id/welcome')
   @HttpCode(202)
+  @ApiBearerAuth()
   @UseGuards(AuthGuard, SelfOrAdminGuard)
   async welcome(@Param('id', { schema: userId }) id: string) {
     orNotFound(await this.users.requestWelcome(id));
