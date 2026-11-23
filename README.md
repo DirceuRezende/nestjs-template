@@ -65,6 +65,8 @@ test/                           e2e (Testcontainers)
 
 ## Configuração
 
+Local: `cp .env.example .env`. Os scripts `start:*` carregam o `.env` (`node --env-file-if-exists`); variável já definida no ambiente vence. O container não usa `.env`.
+
 | Variável | Default |
 |---|---|
 | `NODE_ENV` | `production` (`development` liga segredo e admin de dev) |
