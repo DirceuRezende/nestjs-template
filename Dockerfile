@@ -17,7 +17,8 @@ COPY package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
 
 FROM node:${NODE_VERSION}-slim
-ENV NODE_ENV=production
+ENV NODE_ENV=production \
+    OTEL_SERVICE_NAME=user-template
 WORKDIR /app
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
@@ -26,4 +27,4 @@ COPY drizzle ./drizzle
 COPY package.json ./
 USER node
 EXPOSE 8080
-CMD ["node", "dist/main.js"]
+CMD ["node", "--import", "./dist/instrumentation.js", "dist/main.js"]

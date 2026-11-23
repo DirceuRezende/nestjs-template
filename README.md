@@ -4,7 +4,7 @@ Template de referência com um agregado `User`, autenticação JWT + refresh tok
 
 ```bash
 npm ci
-npm run infra:up     # Postgres 17 (5432) + Kafka (9092)
+npm run infra:up     # Postgres 17 (5432) + Kafka (9092) + Grafana LGTM (3000, OTLP 4317/4318)
 npm run start:dev    # NODE_ENV=development: segredo JWT de dev + admin admin@example.com / admin12345, porta 8080
 npm run check        # lint (oxlint + regra de arquitetura + Prettier) + unitários + e2e (precisa do Docker)
 ```
@@ -75,6 +75,8 @@ test/                           e2e (Testcontainers)
 | `ACCESS_TTL_SECONDS` / `REFRESH_TTL_SECONDS` | `900` / `604800` |
 | `OUTBOX_POLL_INTERVAL_MS` | `1000` |
 
+OpenTelemetry usa as variáveis padrão `OTEL_*` (ex.: `OTEL_EXPORTER_OTLP_ENDPOINT`, padrão `http://localhost:4318`; `OTEL_SERVICE_NAME`, padrão `user-template`; `OTEL_SDK_DISABLED=true` desliga).
+
 ## Segurança
 
 - **Login** devolve `accessToken` (JWT HS256, 15 min, `sub` = id, claim `roles`) e `refreshToken` (32 bytes aleatórios, 7 dias, guardado só como SHA-256).
@@ -104,6 +106,14 @@ docker compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh \
 ```
 
 **Limites conhecidos:** sem retry nem DLQ (mensagem com erro é logada e pulada), sem idempotência no consumidor, sem limpeza do outbox.
+
+## Observabilidade (OpenTelemetry)
+
+Traces, métricas e logs saem via OTLP (http/protobuf). `src/instrumentation.ts` sobe o SDK com as auto-instrumentações (HTTP, Express, pg...) e entra antes do app com `node --import ./dist/instrumentation.js` (`start:*` e o `Dockerfile` já fazem isso; os testes não carregam). `OtelLogger` (`src/otel-logger.ts`) manda os logs do Nest também para o OTel, ligados ao trace da requisição.
+
+Local: `npm run infra:up` sobe o `grafana/otel-lgtm`; Grafana em http://localhost:3000 (admin/admin) → Explore → Tempo (traces), Prometheus (métricas), Loki (logs).
+
+**Limites conhecidos:** o cliente `@confluentinc/kafka-javascript` não tem instrumentação OTel e a do Nest ainda não cobre o Nest 12, então não há spans de Kafka nem de controller/guard; o trace de `POST /welcome` termina no insert do outbox. Queries pg sem span pai (polling do outbox, migrations) não geram trace.
 
 ## Testes
 

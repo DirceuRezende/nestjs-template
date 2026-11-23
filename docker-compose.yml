@@ -1,4 +1,4 @@
-# Postgres + Kafka para desenvolvimento local (npm run infra:up). Os testes usam Testcontainers, não este arquivo.
+# Postgres + Kafka + Grafana LGTM (OpenTelemetry) para desenvolvimento local (npm run infra:up). Os testes usam Testcontainers, não este arquivo.
 name: user-template-node   # sem isto o projeto compose herdaria o nome da pasta e colidiria com o template Java
 
 services:
@@ -27,6 +27,18 @@ services:
       interval: 10s
       timeout: 10s
       retries: 10
+
+  lgtm:
+    image: grafana/otel-lgtm:0.41.1   # coletor OTel + Tempo (traces) + Prometheus (métricas) + Loki (logs) + Grafana
+    ports:
+      - "3000:3000"   # Grafana (admin/admin)
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP (padrão do app)
+    healthcheck:
+      test: ["CMD", "/otel-lgtm/docker/healthcheck.sh"]   # o da imagem, com intervalo menor para o --wait
+      interval: 5s
+      timeout: 5s
+      retries: 30
 
 volumes:
   pgdata:

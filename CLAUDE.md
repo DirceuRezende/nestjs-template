@@ -35,4 +35,5 @@ As skills `nestjs*` em `.claude/skills` são as oficiais do Nest 12 (docs: https
 - Ordem por requisição: guards antes dos pipes. Anônimo com corpo inválido recebe 401, não 400.
 - `bcrypt` e o cliente Kafka são nativos; o npm 11 só roda os scripts de instalação listados em `allowScripts`.
 - O módulo Kafka do Testcontainers só aceita imagens Confluent; o e2e usa `confluentinc/cp-kafka:8.0.0`, o compose usa `apache/kafka`.
-- O compose tem `name: user-template-node` e usa as portas 5432/9092, as mesmas dos templates Java e Go: pare um antes de subir o outro.
+- OpenTelemetry entra por `node --import ./dist/instrumentation.js` (antes de qualquer import do app, por ser ESM); nada em `src/` importa `instrumentation.ts`. Logs vão ao OTel pelo `OtelLogger`: use `new Logger(Classe.name)` normal.
+- O compose tem `name: user-template-node` e usa as portas 5432/9092, as mesmas dos templates Java e Go: pare um antes de subir o outro. O Grafana LGTM usa 3000/4317/4318.
